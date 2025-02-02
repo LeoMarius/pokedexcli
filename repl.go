@@ -5,9 +5,17 @@ import (
 	"fmt"
 	"os"
 	"strings"
+
+	"github.com/LeoMarius/pokedexcli/internal/pokeapi"
 )
 
-func startRepl() {
+type config struct {
+	pokeapiClient    pokeapi.Client
+	nextLocationsURL *string
+	prevLocationsURL *string
+}
+
+func startRepl(cfg *config) {
 
 	reader := bufio.NewScanner(os.Stdin)
 
@@ -25,7 +33,7 @@ func startRepl() {
 
 		if exists {
 
-			err := commands.callback()
+			err := commands.callback(cfg)
 			if err != nil {
 				fmt.Printf("Error executing command: %v\n", err)
 			}
@@ -44,7 +52,7 @@ func cleanInput(text string) []string {
 type cliCommand struct {
 	name        string
 	description string
-	callback    func() error
+	callback    func(*config) error
 }
 
 func getCommands() map[string]cliCommand {
@@ -62,12 +70,12 @@ func getCommands() map[string]cliCommand {
 		"map": {
 			name:        "map",
 			description: "Displays the map",
-			callback:    commandMap,
+			callback:    commandMapf,
 		},
 		"mapb": {
 			name:        "mapb",
 			description: "Displays the 20 previous map",
-			callback:    commandMapBack,
+			callback:    commandMapb,
 		},
 	}
 	return commands

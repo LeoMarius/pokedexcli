@@ -1,77 +1,40 @@
 package main
 
 import (
-	"encoding/json"
+	"errors"
 	"fmt"
-	"io"
-	"log"
-	"net/http"
 )
 
-var ofset int = 0
-
-func commandMap() error {
-
-	url := fmt.Sprintf("https://pokeapi.co/api/v2/location-area/?offset=%v&limit=20", ofset)
-
-	res, err := http.Get(url)
+func commandMapf(cfg *config) error {
+	locationsResp, err := cfg.pokeapiClient.ListLocations(cfg.nextLocationsURL)
 	if err != nil {
-		log.Fatal(err)
-	}
-	body, err := io.ReadAll(res.Body)
-	defer res.Body.Close()
-
-	if res.StatusCode > 299 {
-		log.Fatalf("Response failed with status code: %d and\nbody: %s\n", res.StatusCode, body)
-	}
-	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
-	data := MapResults{}
+	cfg.nextLocationsURL = locationsResp.Next
+	cfg.prevLocationsURL = locationsResp.Previous
 
-	err = json.Unmarshal(body, &data)
-	if err != nil {
-		fmt.Println(err)
+	for _, loc := range locationsResp.Results {
+		fmt.Println(loc.Name)
 	}
-
-	for _, location := range data.Results {
-		fmt.Println(location.Name)
-	}
-	ofset += 20
-
-	// fmt.Println(data)
-
-	// fmt.Printf("%s", body)
-
 	return nil
 }
 
-func commandMapBack() error {
-	if ofset > 40 {
-		// fmt.Println(ofset)
-		ofset -= 40
-	} else {
-		fmt.Println()
-		fmt.Println("you're on the first page")
-		fmt.Println()
-		ofset = 0
+func commandMapb(cfg *config) error {
+	if cfg.prevLocationsURL == nil {
+		return errors.New("you're on the first page")
 	}
-	commandMap()
 
-	// ofset -= 20
+	locationResp, err := cfg.pokeapiClient.ListLocations(cfg.prevLocationsURL)
+	if err != nil {
+		return err
+	}
 
+	cfg.nextLocationsURL = locationResp.Next
+	cfg.prevLocationsURL = locationResp.Previous
+
+	for _, loc := range locationResp.Results {
+		fmt.Println(loc.Name)
+	}
 	return nil
-}
-
-type LocationArea struct {
-	Name string `json:"name"` // key will be "name"
-	Url  string `json:"url"`  // key will be "url"
-}
-
-type MapResults struct {
-	Count    int            `json:"count"`
-	Next     string         `json:"next"`
-	Previous interface{}    `json:"previous"`
-	Results  []LocationArea `json:"results"`
 }
