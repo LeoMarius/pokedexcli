@@ -12,5 +12,7 @@ func main() {
 		pokeapiClient: pokeClient,
 	}
 
+	// pokecache := pokecache.NewCache(1)
+
 	startRepl(cfg)
 }
