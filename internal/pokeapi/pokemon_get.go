@@ -2,6 +2,7 @@ package pokeapi
 
 import (
 	"encoding/json"
+	"errors"
 	"io"
 )
 
@@ -53,5 +54,21 @@ func (c *Client) AddPokemon(pokemon Pokemon) error {
 
 	My_pokedex[pokemon.Name] = pokemon
 	return nil
+
+}
+
+func (c *Client) InspectPokemon(pokemon string) (Pokemon, error) {
+
+	p, found := My_pokedex[pokemon]
+	if found {
+		return p, nil
+	}
+	return Pokemon{}, errors.New("Pokemon not found")
+
+}
+
+func (c *Client) GetPokedex() (map[string]Pokemon, error) {
+
+	return My_pokedex, nil
 
 }
